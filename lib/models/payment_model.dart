@@ -1,5 +1,3 @@
-// lib/models/payment_model.dart
-
 class PaymentModel {
   final String? id;
   final String userId;

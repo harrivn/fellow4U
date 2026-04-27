@@ -1,4 +1,3 @@
-// lib/screens/main_screen.dart
 import 'package:flutter/material.dart';
 import 'create_trip_screen.dart';
 import 'settings_screen.dart';

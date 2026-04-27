@@ -1,4 +1,3 @@
-// lib/services/trip_service.dart
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/trip_model.dart';
 

@@ -1,4 +1,3 @@
-// lib/screens/create_trip_screen.dart
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/trip_service.dart';

@@ -1,8 +1,15 @@
-// lib/screens/next_trip_screen.dart
 import 'package:flutter/material.dart';
+import 'payment_checkout_screen.dart';
 
 class NextTripPage extends StatelessWidget {
-  const NextTripPage({super.key});
+  final String tripId;
+  final double amount;
+
+  const NextTripPage({
+    super.key,
+    required this.tripId,
+    required this.amount,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -109,11 +116,11 @@ class NextTripPage extends StatelessWidget {
                           const SizedBox(height: 16),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: const [
-                              Text('Fee',
+                            children: [
+                              const Text('Fee',
                                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                              Text('\$20.00',
-                                  style: TextStyle(
+                              Text('\$${amount.toStringAsFixed(2)}',
+                                  style: const TextStyle(
                                       fontSize: 20,
                                       fontWeight: FontWeight.bold,
                                       color: Color(0xFF00C9A7))),
@@ -130,6 +137,32 @@ class NextTripPage extends StatelessWidget {
                                     style: TextStyle(color: Color(0xFF00C9A7))),
                                 style: OutlinedButton.styleFrom(
                                   side: const BorderSide(color: Color(0xFF00C9A7)),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8)),
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => PaymentScreen(
+                                        tripId: tripId,
+                                        amount: amount,
+                                      ),
+                                    ),
+                                  );
+                                },
+                                icon: const Icon(Icons.credit_card, size: 16),
+                                label: const Text('Pay'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF00C9A7),
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
                                   shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(8)),
                                   padding: const EdgeInsets.symmetric(vertical: 12),

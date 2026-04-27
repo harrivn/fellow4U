@@ -1,5 +1,3 @@
-// lib/models/trip_model.dart
-
 class TripModel {
   final String? id;
   final String userId;

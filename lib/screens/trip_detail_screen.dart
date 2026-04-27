@@ -1,9 +1,7 @@
-// lib/screens/trip_detail_screen.dart
 import 'package:flutter/material.dart';
 import '../services/trip_service.dart';
 import '../models/trip_model.dart';
 import 'next_trip_screen.dart';
-import 'payment_checkout_screen.dart';
 
 class TripDetailPage extends StatefulWidget {
   final String tripId;
@@ -34,7 +32,15 @@ class _TripDetailPageState extends State<TripDetailPage> {
   Future<void> _markFinished() async {
     await _tripService.markFinished(widget.tripId);
     if (mounted) {
-      Navigator.push(context, MaterialPageRoute(builder: (_) => const NextTripPage()));
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => NextTripPage(
+            tripId: widget.tripId,
+            amount: _trip?.fee ?? 0,
+          ),
+        ),
+      );
     }
   }
 
@@ -47,7 +53,6 @@ class _TripDetailPageState extends State<TripDetailPage> {
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
-              // Header
               Row(children: [
                 GestureDetector(
                   onTap: () => Navigator.pop(context),
@@ -62,27 +67,27 @@ class _TripDetailPageState extends State<TripDetailPage> {
               const SizedBox(height: 16),
               _loading
                   ? const Expanded(
-                      child: Center(
-                          child: CircularProgressIndicator(color: Color(0xFF00C4A0))))
+                  child: Center(
+                      child: CircularProgressIndicator(color: Color(0xFF00C4A0))))
                   : _trip == null
-                      ? const Expanded(
-                          child: Center(child: Text('Không tìm thấy chuyến đi')))
-                      : Expanded(
-                          child: SingleChildScrollView(
-                            child: Container(
-                              decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(20)),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  _buildImageSection(),
-                                  _buildDetailSection(),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
+                  ? const Expanded(
+                  child: Center(child: Text('Không tìm thấy chuyến đi')))
+                  : Expanded(
+                child: SingleChildScrollView(
+                  child: Container(
+                    decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20)),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildImageSection(),
+                        _buildDetailSection(),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -147,17 +152,17 @@ class _TripDetailPageState extends State<TripDetailPage> {
             runSpacing: 6,
             children: trip.attractions
                 .map((a) => Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.teal.shade200),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(mainAxisSize: MainAxisSize.min, children: [
-                        const Icon(Icons.location_on, color: Colors.teal, size: 14),
-                        const SizedBox(width: 4),
-                        Text(a, style: const TextStyle(fontSize: 13)),
-                      ]),
-                    ))
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.teal.shade200),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                const Icon(Icons.location_on, color: Colors.teal, size: 14),
+                const SizedBox(width: 4),
+                Text(a, style: const TextStyle(fontSize: 13)),
+              ]),
+            ))
                 .toList(),
           ),
         ],
@@ -171,45 +176,16 @@ class _TripDetailPageState extends State<TripDetailPage> {
         const SizedBox(height: 16),
         const Divider(height: 1),
         const SizedBox(height: 16),
-        Row(children: [
-          Expanded(
-            child: OutlinedButton.icon(
-              onPressed: _markFinished,
-              icon: const Icon(Icons.check, color: Colors.black87, size: 18),
-              label: const Text('Mark Finished', style: TextStyle(color: Colors.black87)),
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                side: const BorderSide(color: Colors.black26),
-              ),
-            ),
+        OutlinedButton.icon(
+          onPressed: _markFinished,
+          icon: const Icon(Icons.check, color: Colors.black87, size: 18),
+          label: const Text('Mark Finished', style: TextStyle(color: Colors.black87)),
+          style: OutlinedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            side: const BorderSide(color: Colors.black26),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: ElevatedButton.icon(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => PaymentScreen(
-                      tripId: widget.tripId,
-                      amount: trip.fee,
-                    ),
-                  ),
-                );
-              },
-              icon: const Icon(Icons.credit_card, size: 18),
-              label: const Text('Pay'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.teal,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-              ),
-            ),
-          ),
-        ]),
+        ),
       ]),
     );
   }

@@ -1,4 +1,3 @@
-// lib/services/payment_service.dart
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/payment_model.dart';
 
