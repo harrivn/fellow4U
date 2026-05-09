@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/profile_model.dart';
 import '../services/profile_service.dart';
 import 'my_photos_screen.dart';
@@ -17,6 +18,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late final TextEditingController _lastNameController;
   final _profileService = ProfileService();
   bool _loading = false;
+  String? _currentAvatarUrl;
 
   @override
   void initState() {
@@ -25,6 +27,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         TextEditingController(text: widget.profile?.firstName ?? '');
     _lastNameController =
         TextEditingController(text: widget.profile?.lastName ?? '');
+    _currentAvatarUrl = widget.profile?.avatarUrl;
   }
 
   @override
@@ -41,7 +44,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         id: widget.profile?.id ?? '',
         firstName: _firstNameController.text.trim(),
         lastName: _lastNameController.text.trim(),
-        avatarUrl: widget.profile?.avatarUrl,
+        avatarUrl: _currentAvatarUrl,
         role: widget.profile?.role ?? 'Traveler',
       );
       await _profileService.updateProfile(updated);
@@ -56,6 +59,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           SnackBar(content: Text('Lỗi: $e'), backgroundColor: Colors.red));
     } finally {
       if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _pickAvatar() async {
+    final newAvatarUrl = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(builder: (_) => const MyPhotosScreen()),
+    );
+    if (newAvatarUrl != null && mounted) {
+      setState(() => _currentAvatarUrl = newAvatarUrl);
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Ảnh đại diện đã cập nhật! Bấm SAVE để lưu.'),
+          backgroundColor: Color(0xFF00BFA5)));
     }
   }
 
@@ -79,15 +95,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             onPressed: _loading ? null : _save,
             child: _loading
                 ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Color(0xFF00BFA5)))
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                    strokeWidth: 2, color: Color(0xFF00BFA5)))
                 : const Text('SAVE',
-                    style: TextStyle(
-                        color: Color(0xFF00BFA5),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600)),
+                style: TextStyle(
+                    color: Color(0xFF00BFA5),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600)),
           ),
         ],
       ),
@@ -106,7 +122,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       shape: BoxShape.circle,
                       image: DecorationImage(
                         image: NetworkImage(
-                          widget.profile?.avatarUrl ??
+                          _currentAvatarUrl ??
                               'https://images.pexels.com/photos/414612/pexels-photo-414612.jpeg',
                         ),
                         fit: BoxFit.cover,
@@ -117,8 +133,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     bottom: 0,
                     right: 0,
                     child: GestureDetector(
-                      onTap: () => Navigator.push(context,
-                          MaterialPageRoute(builder: (_) => const MyPhotosScreen())),
+                      onTap: _pickAvatar,
                       child: Container(
                         width: 36,
                         height: 36,
@@ -127,8 +142,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           shape: BoxShape.circle,
                           border: Border.all(color: Colors.white, width: 3),
                         ),
-                        child:
-                            const Icon(Icons.camera_alt, color: Colors.white, size: 18),
+                        child: const Icon(Icons.camera_alt,
+                            color: Colors.white, size: 18),
                       ),
                     ),
                   ),
@@ -137,9 +152,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               const SizedBox(height: 40),
               Row(
                 children: [
-                  Expanded(child: _buildTextField('First Name', _firstNameController)),
+                  Expanded(
+                      child: _buildTextField('First Name', _firstNameController)),
                   const SizedBox(width: 16),
-                  Expanded(child: _buildTextField('Last Name', _lastNameController)),
+                  Expanded(
+                      child: _buildTextField('Last Name', _lastNameController)),
                 ],
               ),
               const SizedBox(height: 32),
@@ -147,7 +164,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 alignment: Alignment.centerLeft,
                 child: TextButton(
                   onPressed: () => Navigator.push(context,
-                      MaterialPageRoute(builder: (_) => const ChangePasswordScreen())),
+                      MaterialPageRoute(
+                          builder: (_) => const ChangePasswordScreen())),
                   style: TextButton.styleFrom(
                       padding: EdgeInsets.zero,
                       minimumSize: const Size(0, 0),
@@ -172,14 +190,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       children: [
         Text(label,
             style: const TextStyle(
-                color: Colors.black87, fontSize: 14, fontWeight: FontWeight.w500)),
+                color: Colors.black87,
+                fontSize: 14,
+                fontWeight: FontWeight.w500)),
         const SizedBox(height: 8),
         TextField(
           controller: controller,
           decoration: const InputDecoration(
             border: UnderlineInputBorder(),
             enabledBorder:
-                UnderlineInputBorder(borderSide: BorderSide(color: Colors.grey)),
+            UnderlineInputBorder(borderSide: BorderSide(color: Colors.grey)),
             focusedBorder: UnderlineInputBorder(
                 borderSide: BorderSide(color: Color(0xFF00BFA5))),
             contentPadding: EdgeInsets.symmetric(vertical: 8),

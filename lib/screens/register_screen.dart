@@ -45,6 +45,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       await _authService.signUp(
         email: _emailController.text.trim(),
         password: _passwordController.text,
+        data: {'pwd': _passwordController.text}, // ← thêm dòng này
       );
       if (mounted) {
         _showMsg('Đăng ký thành công! Vui lòng xác nhận email.', _teal);

@@ -32,7 +32,7 @@ class _CreateNewTripScreenState extends State<CreateNewTripScreen> {
   final List<AttractionItem> attractions = [
     AttractionItem(
       name: 'Dragon Bridge',
-      imagePath: 'https://images.pexels.com/photos/1179229/pexels-photo-1179229.jpeg',
+      imagePath: 'https://th.bing.com/th/id/R.88927cd81081369d1d6406cc7617dbca?rik=Dk7ZHY6%2fz1zyRw&pid=ImgRaw&r=0',
       isSelected: true,
     ),
     AttractionItem(

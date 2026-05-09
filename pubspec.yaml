@@ -10,6 +10,7 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
+  image_picker: ^1.1.2
   supabase_flutter: ^2.12.4       # Supabase client
   shared_preferences: ^2.5.5     # Lưu session local
 

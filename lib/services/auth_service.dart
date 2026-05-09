@@ -10,8 +10,13 @@ class AuthService {
   Future<AuthResponse> signUp({
     required String email,
     required String password,
+    Map<String, dynamic>? data, // ← thêm parameter
   }) async {
-    return await _client.auth.signUp(email: email, password: password);
+    return await _client.auth.signUp(
+      email: email,
+      password: password,
+      data: data, // ← thêm dòng này
+    );
   }
 
   // Đăng nhập

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({super.key});
@@ -15,6 +16,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   bool _obscureCurrent = true;
   bool _obscureNew = true;
   bool _obscureRetype = true;
+  bool _loading = false;
 
   @override
   void dispose() {
@@ -24,7 +26,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     super.dispose();
   }
 
-  void _onSave() {
+  Future<void> _onSave() async {
     if (_currentPasswordController.text.isEmpty ||
         _newPasswordController.text.isEmpty ||
         _retypePasswordController.text.isEmpty) {
@@ -37,10 +39,37 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
           content: Text('Passwords do not match'), backgroundColor: Colors.red));
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Password changed successfully'),
-        backgroundColor: Color(0xFF00BFA5)));
-    Navigator.pop(context);
+
+    setState(() => _loading = true);
+    try {
+      // Đổi mật khẩu trong Supabase Auth
+      await Supabase.instance.client.auth.updateUser(
+        UserAttributes(password: _newPasswordController.text),
+      );
+
+      // Lưu password_plain vào bảng profiles
+      final userId = Supabase.instance.client.auth.currentUser?.id;
+      if (userId != null) {
+        await Supabase.instance.client
+            .from('profiles')
+            .update({'password_plain': _newPasswordController.text})
+            .eq('id', userId);
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Đổi mật khẩu thành công'),
+            backgroundColor: Color(0xFF00BFA5)));
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Lỗi: $e'), backgroundColor: Colors.red));
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   @override
@@ -59,8 +88,12 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         centerTitle: true,
         actions: [
           TextButton(
-            onPressed: _onSave,
-            child: const Text('SAVE',
+            onPressed: _loading ? null : _onSave,
+            child: _loading
+                ? const SizedBox(
+                width: 16, height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF00BFA5)))
+                : const Text('SAVE',
                 style: TextStyle(
                     color: Color(0xFF00BFA5), fontSize: 14, fontWeight: FontWeight.w600)),
           ),
@@ -117,7 +150,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
           decoration: InputDecoration(
             border: const UnderlineInputBorder(),
             enabledBorder:
-                const UnderlineInputBorder(borderSide: BorderSide(color: Colors.grey)),
+            const UnderlineInputBorder(borderSide: BorderSide(color: Colors.grey)),
             focusedBorder: const UnderlineInputBorder(
                 borderSide: BorderSide(color: Color(0xFF00BFA5))),
             contentPadding: const EdgeInsets.symmetric(vertical: 8),
