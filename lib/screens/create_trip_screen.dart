@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/trip_service.dart';
 import '../models/trip_model.dart';
@@ -62,10 +64,109 @@ class _CreateNewTripScreenState extends State<CreateNewTripScreen> {
     super.dispose();
   }
 
+  // Tìm ảnh từ Unsplash theo tên địa điểm
+  Future<String?> _fetchImage(String query) async {
+    try {
+      final response = await http.get(Uri.parse(
+          'https://api.unsplash.com/search/photos?query=$query+vietnam&per_page=1&client_id=FarVn9Lz8f36q0wqhtqIG6q5TsSYuZPQmV8Z9q9wLvk'
+      ));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final results = data['results'] as List;
+        if (results.isNotEmpty) {
+          return results[0]['urls']['regular'];
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  // Dialog thêm địa điểm mới
+  Future<void> _showAddAttractionDialog() async {
+    final nameController = TextEditingController();
+
+    await showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Thêm địa điểm mới',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Tên địa điểm',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+            const SizedBox(height: 6),
+            TextField(
+              controller: nameController,
+              autofocus: true,
+              decoration: InputDecoration(
+                hintText: 'VD: Marble Mountains',
+                hintStyle: const TextStyle(color: Colors.grey, fontSize: 13),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: primaryTeal, width: 1.5),
+                ),
+                contentPadding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              '* Ảnh sẽ được tìm tự động từ Unsplash',
+              style: TextStyle(color: Colors.grey, fontSize: 11),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Huỷ', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final name = nameController.text.trim();
+              if (name.isEmpty) return;
+              Navigator.pop(ctx);
+
+              // Tìm ảnh tự động
+              String image =
+                  'https://images.pexels.com/photos/1179229/pexels-photo-1179229.jpeg';
+              final fetched = await _fetchImage(name);
+              if (fetched != null) image = fetched;
+
+              setState(() {
+                attractions.add(AttractionItem(
+                  name: name,
+                  imagePath: image,
+                  isSelected: true,
+                ));
+              });
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: primaryTeal,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Text('Thêm'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _createTrip() async {
     if (_locationController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Vui lòng nhập địa điểm'), backgroundColor: Colors.red));
+          content: Text('Vui lòng nhập địa điểm'),
+          backgroundColor: Colors.red));
       return;
     }
 
@@ -78,9 +179,15 @@ class _CreateNewTripScreenState extends State<CreateNewTripScreen> {
       final trip = TripModel(
         userId: userId,
         location: _locationController.text.trim(),
-        date: _dateController.text.trim().isNotEmpty ? _dateController.text.trim() : null,
-        fromTime: _fromTimeController.text.trim().isNotEmpty ? _fromTimeController.text.trim() : null,
-        toTime: _toTimeController.text.trim().isNotEmpty ? _toTimeController.text.trim() : null,
+        date: _dateController.text.trim().isNotEmpty
+            ? _dateController.text.trim()
+            : null,
+        fromTime: _fromTimeController.text.trim().isNotEmpty
+            ? _fromTimeController.text.trim()
+            : null,
+        toTime: _toTimeController.text.trim().isNotEmpty
+            ? _toTimeController.text.trim()
+            : null,
         numberOfTravelers: numberOfTravelers,
         fee: double.tryParse(_feeController.text) ?? 0,
         guideLanguage: 'Korean, English',
@@ -116,7 +223,9 @@ class _CreateNewTripScreenState extends State<CreateNewTripScreen> {
               child: Center(
                 child: Text('Create New Trip',
                     style: TextStyle(
-                        fontSize: 17, fontWeight: FontWeight.w600, color: textDark)),
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                        color: textDark)),
               ),
             ),
             Expanded(
@@ -185,7 +294,8 @@ class _CreateNewTripScreenState extends State<CreateNewTripScreen> {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       _buildSectionLabel('Where you want to explore'),
       Container(
-        decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: borderColor))),
+        decoration: const BoxDecoration(
+            border: Border(bottom: BorderSide(color: borderColor))),
         child: Row(children: [
           const Icon(Icons.location_on_outlined, size: 18, color: primaryTeal),
           const SizedBox(width: 8),
@@ -208,7 +318,8 @@ class _CreateNewTripScreenState extends State<CreateNewTripScreen> {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       _buildSectionLabel('Date'),
       Container(
-        decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: borderColor))),
+        decoration: const BoxDecoration(
+            border: Border(bottom: BorderSide(color: borderColor))),
         child: Row(children: [
           const Icon(Icons.calendar_month_outlined, size: 18, color: textGrey),
           const SizedBox(width: 8),
@@ -232,8 +343,8 @@ class _CreateNewTripScreenState extends State<CreateNewTripScreen> {
   Widget _buildTimeField() {
     Widget timeBox(TextEditingController ctrl, String hint) => Expanded(
       child: Container(
-        decoration:
-        const BoxDecoration(border: Border(bottom: BorderSide(color: borderColor))),
+        decoration: const BoxDecoration(
+            border: Border(bottom: BorderSide(color: borderColor))),
         child: Row(children: [
           const Icon(Icons.access_time, size: 18, color: textGrey),
           const SizedBox(width: 8),
@@ -272,7 +383,8 @@ class _CreateNewTripScreenState extends State<CreateNewTripScreen> {
             if (numberOfTravelers > 1) setState(() => numberOfTravelers--);
           },
           child: Container(
-            width: 36, height: 36,
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
               color: numberOfTravelers > 1 ? primaryTeal : Colors.grey[300],
               borderRadius: BorderRadius.circular(6),
@@ -282,7 +394,8 @@ class _CreateNewTripScreenState extends State<CreateNewTripScreen> {
         ),
         const SizedBox(width: 12),
         Container(
-          width: 50, height: 36,
+          width: 50,
+          height: 36,
           alignment: Alignment.center,
           decoration: BoxDecoration(
               border: Border.all(color: borderColor),
@@ -295,7 +408,8 @@ class _CreateNewTripScreenState extends State<CreateNewTripScreen> {
         GestureDetector(
           onTap: () => setState(() => numberOfTravelers++),
           child: Container(
-            width: 36, height: 36,
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
                 color: primaryTeal, borderRadius: BorderRadius.circular(6)),
             child: const Icon(Icons.arrow_drop_up, color: Colors.white, size: 24),
@@ -309,16 +423,21 @@ class _CreateNewTripScreenState extends State<CreateNewTripScreen> {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       _buildSectionLabel('Fee'),
       Container(
-        decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: borderColor))),
+        decoration: const BoxDecoration(
+            border: Border(bottom: BorderSide(color: borderColor))),
         child: Row(children: [
           Container(
-            width: 20, height: 20,
+            width: 20,
+            height: 20,
             decoration: BoxDecoration(
-                shape: BoxShape.circle, border: Border.all(color: textGrey, width: 1.5)),
+                shape: BoxShape.circle,
+                border: Border.all(color: textGrey, width: 1.5)),
             child: const Center(
               child: Text('\$',
                   style: TextStyle(
-                      fontSize: 11, color: textGrey, fontWeight: FontWeight.w600)),
+                      fontSize: 11,
+                      color: textGrey,
+                      fontWeight: FontWeight.w600)),
             ),
           ),
           const SizedBox(width: 8),
@@ -345,14 +464,16 @@ class _CreateNewTripScreenState extends State<CreateNewTripScreen> {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       _buildSectionLabel("Guide's Language"),
       Container(
-        decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: borderColor))),
+        decoration: const BoxDecoration(
+            border: Border(bottom: BorderSide(color: borderColor))),
         child: const Row(children: [
           Icon(Icons.language, size: 18, color: textGrey),
           SizedBox(width: 8),
           Expanded(
             child: Padding(
               padding: EdgeInsets.symmetric(vertical: 10),
-              child: Text('Korean, English', style: TextStyle(fontSize: 14, color: textDark)),
+              child: Text('Korean, English',
+                  style: TextStyle(fontSize: 14, color: textDark)),
             ),
           ),
         ]),
@@ -368,63 +489,104 @@ class _CreateNewTripScreenState extends State<CreateNewTripScreen> {
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2, crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: 1.55,
+          crossAxisCount: 2,
+          crossAxisSpacing: 10,
+          mainAxisSpacing: 10,
+          childAspectRatio: 1.55,
         ),
         itemCount: attractions.length + 1,
         itemBuilder: (context, index) {
           if (index == 0) {
-            return Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: borderColor, width: 1.5),
+            return GestureDetector(
+              onTap: _showAddAttractionDialog,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: borderColor, width: 1.5),
+                ),
+                child: const Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.add, color: primaryTeal, size: 28),
+                      SizedBox(height: 4),
+                      Text('Add New',
+                          style: TextStyle(
+                              color: primaryTeal,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500)),
+                    ]),
               ),
-              child: const Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                Icon(Icons.add, color: primaryTeal, size: 28),
-                SizedBox(height: 4),
-                Text('Add New',
-                    style: TextStyle(
-                        color: primaryTeal, fontSize: 13, fontWeight: FontWeight.w500)),
-              ]),
             );
           }
+
           final item = attractions[index - 1];
           return GestureDetector(
             onTap: () => setState(() => item.isSelected = !item.isSelected),
+            onLongPress: () {
+              if (index - 1 >= 3) {
+                setState(() => attractions.removeAt(index - 1));
+              }
+            },
             child: ClipRRect(
               borderRadius: BorderRadius.circular(12),
               child: Stack(fit: StackFit.expand, children: [
-                Image.network(item.imagePath, fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                        color: Colors.grey[300],
-                        child: const Icon(Icons.image, color: Colors.grey, size: 32))),
+                Image.network(
+                  item.imagePath,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                      color: Colors.grey[300],
+                      child:
+                      const Icon(Icons.image, color: Colors.grey, size: 32)),
+                ),
                 Positioned.fill(
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        begin: Alignment.topCenter, end: Alignment.bottomCenter,
-                        colors: [Colors.transparent, Colors.black.withValues(alpha: 0.55)],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Colors.black.withValues(alpha: 0.55)
+                        ],
                       ),
                     ),
                   ),
                 ),
-                Positioned(bottom: 8, left: 8, right: 8,
-                    child: Text(item.name,
-                        style: const TextStyle(
-                            color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600,
-                            shadows: [Shadow(blurRadius: 4, color: Colors.black54)]))),
+                Positioned(
+                  bottom: 8,
+                  left: 8,
+                  right: 8,
+                  child: Text(item.name,
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          shadows: [
+                            Shadow(blurRadius: 4, color: Colors.black54)
+                          ])),
+                ),
                 if (item.isSelected)
-                  Positioned(top: 8, right: 8,
-                      child: Container(
-                        width: 24, height: 24,
-                        decoration: const BoxDecoration(color: primaryTeal, shape: BoxShape.circle),
-                        child: const Icon(Icons.check, color: Colors.white, size: 16),
-                      )),
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Container(
+                      width: 24,
+                      height: 24,
+                      decoration: const BoxDecoration(
+                          color: primaryTeal, shape: BoxShape.circle),
+                      child:
+                      const Icon(Icons.check, color: Colors.white, size: 16),
+                    ),
+                  ),
               ]),
             ),
           );
         },
       ),
+      const SizedBox(height: 6),
+      const Text('* Giữ lâu để xoá địa điểm tự thêm',
+          style: TextStyle(color: Colors.grey, fontSize: 11)),
     ]);
   }
 }
